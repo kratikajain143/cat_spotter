@@ -12,7 +12,9 @@ _catalog = []
 _catalog_path = settings.DATA_DIR / "content" / "training_catalog.json"
 if _catalog_path.exists():
     with open(_catalog_path, "r") as f:
-        _catalog = json.load(f)
+        raw = json.load(f)
+        # The JSON wraps modules under a "modules" key
+        _catalog = raw.get("modules", raw) if isinstance(raw, dict) else raw
 
 _queue = []
 

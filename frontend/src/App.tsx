@@ -16,9 +16,11 @@ import { IncidentSheet } from './sheets/IncidentSheet';
 import { InsightsSheet } from './sheets/InsightsSheet';
 import { EndOfShiftSummary } from './components/EndOfShiftSummary';
 import { ActionBar } from './components/ActionBar';
+import { ScheduleSheet } from './sheets/ScheduleSheet';
 
 export function App() {
   const [booted, setBooted] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   
   const setConnection = useSpotterStore(state => state.setConnection);
   const handleWsMessage = useSpotterStore(state => state.handleWsMessage);
@@ -38,12 +40,14 @@ export function App() {
       if (key === 'i') useSpotterStore.getState().setIncidentSheetOpen(true);
       if (key === 'g') useSpotterStore.getState().setInsightsSheetOpen(true);
       if (key === 'e') useSpotterStore.getState().setEndOfShiftOpen(true);
+      if (key === 's') setScheduleOpen(true);
       if (key === 'escape') {
         const s = useSpotterStore.getState();
         s.setTrainingSheetOpen(false);
         s.setIncidentSheetOpen(false);
         s.setInsightsSheetOpen(false);
         s.setEndOfShiftOpen(false);
+        setScheduleOpen(false);
       }
     };
     window.addEventListener('keydown', handleKey);
@@ -84,7 +88,7 @@ export function App() {
         </div>
       </main>
       
-      <ActionBar />
+      <ActionBar onSchedule={() => setScheduleOpen(true)} />
       
       <SpotterOrb />
       <NudgeBubble />
@@ -95,6 +99,7 @@ export function App() {
       <IncidentSheet />
       <InsightsSheet />
       <EndOfShiftSummary />
+      <ScheduleSheet isOpen={scheduleOpen} onClose={() => setScheduleOpen(false)} />
     </div>
   );
 }

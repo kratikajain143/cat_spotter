@@ -42,4 +42,7 @@ export const api = {
   simInject: (body: Record<string, unknown>) =>
     request<unknown>('/sim/inject', { method: 'POST', body: JSON.stringify(body) }),
   ackAlert: (alertId: string) => request<unknown>(`/ack/${alertId}`, { method: 'POST' }),
+  scheduleTask: (body: Record<string, unknown>) =>
+    request<unknown>('/tasks/schedule', { method: 'POST', body: JSON.stringify(body) }),
+  deleteTask: (taskId: string) => request<unknown>(`/tasks/${taskId}`, { method: 'DELETE' }),
 };

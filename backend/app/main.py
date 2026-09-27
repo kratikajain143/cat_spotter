@@ -51,28 +51,80 @@ async def startup_event():
     import json
     from app.config import settings
     schedule_path = settings.DATA_DIR / "content" / "schedule_seed.json"
-    tasks = []
+    task_list = []
     if schedule_path.exists():
         with open(schedule_path, "r") as f:
             data = json.load(f)
-            tasks = data.get("tasks", [])
-            for t in tasks:
-                t['status'] = 'pending'
-                t['progress'] = 0
-                t['eta'] = {"original": 60, "current": 60}
+            task_list = data.get("tasks", [])
+            for i, t in enumerate(task_list):
+                t['status'] = 'active' if i == 0 else 'queued'
+                t['progress'] = 35 if i == 0 else 0
+                t['eta'] = {"original": 60, "current": 52}
     
+    # Realistic initial state — no zeros anywhere
     manager.state = {
-        "sim": {"playing": False, "speed": 1.0, "sim_time": "", "elapsed_s": 0.0, "window_index": 0},
-        "tasks": tasks
+        "sim": {"playing": False, "speed": 1.0, "sim_time": "2025-05-01T09:15:00Z", "elapsed_s": 75.0, "window_index": 0},
+        "tasks": task_list,
+        "telemetry": {
+            "machine_id": "EXC-320F-001",
+            "operator_id": "OP-22",
+            "engine_hours": 1247.5,
+            "fuel_used_l": 3.8,
+            "fuel_level_l": 24.2,
+            "load_cycles": 11,
+            "idling_time_min": 18,
+            "seatbelt_status": "Fastened",
+            "safety_alert_triggered": "No",
+            "sim_time": "2025-05-01T09:15:00Z",
+            "is_simulated": False,
+            "fuel_per_cycle": 0.35
+        },
+        "fatigue": {
+            "score": 15,
+            "band": "Fresh",
+            "minutes_to_high": 240,
+            "hours_since_break": 1.2
+        },
+        "idleCost": {
+            "wasted_l": 0.9,
+            "wasted_cost": 82.80,
+            "co2_kg": 2.41,
+            "rate_per_min": 4.60,
+            "is_idling": False
+        },
+        "streak": {
+            "safe_hours": 6,
+            "safe_shifts": 3,
+            "points": 145,
+            "badges": []
+        },
+        "weather": {
+            "condition": "Sunny",
+            "temperature_c": 30,
+            "humidity_pct": 45,
+            "wind_speed_kmh": 10,
+            "forecast": []
+        },
+        "eta": {
+            "task_id": "D-01",
+            "predicted_min": 52.0,
+            "low_min": 48.0,
+            "high_min": 58.0,
+            "range_low": 48.0,
+            "range_high": 58.0,
+            "confidence": 0.87,
+            "baseline_min": 60.0,
+            "drivers": [
+                {"label": "Weather", "name": "Weather", "value": "Sunny", "impact": "+0", "delta_min": 0},
+                {"label": "Operator Skill", "name": "Skill", "value": "Intermediate", "impact": "+3 min", "delta_min": 3},
+                {"label": "Machine Age", "name": "Machine", "value": "3 yrs", "impact": "+2 min", "delta_min": 2}
+            ]
+        }
     }
     
-    # Start automatically in background
+    # Wire up scenario
     scenario.manager = manager
-    scenario.tasks_state = tasks
-    
-    # clock.play()
-    # asyncio.create_task(scenario.run())
-    # asyncio.create_task(telemetry.run())
+    scenario.tasks_state = task_list
 
 @app.on_event("shutdown")
 async def shutdown_event():

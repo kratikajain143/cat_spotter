@@ -11,7 +11,10 @@ export function TrainingSheet() {
 
   useEffect(() => {
     if (trainingSheetOpen) {
-      api.getTrainingCatalog().then(setCatalog).catch(() => {});
+      api.getTrainingCatalog().then(data => {
+        console.log('Catalog loaded:', data);
+        setCatalog(data as any[]);
+      }).catch(err => console.error('Catalog fetch failed:', err));
     }
   }, [trainingSheetOpen]);
 

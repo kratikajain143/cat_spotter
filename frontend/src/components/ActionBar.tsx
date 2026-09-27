@@ -3,6 +3,7 @@ import { useSpotterStore } from '../store/spotter';
 import { api } from '../net/api';
 
 const actions = [
+  { key: 'S', label: 'Schedule Task', icon: '🗓️', action: 'schedule' },
   { key: 'T', label: 'Training', icon: '📚', action: 'training' },
   { key: 'I', label: 'Report Incident', icon: '⚠️', action: 'incident' },
   { key: 'G', label: 'Analytics', icon: '📊', action: 'insights' },
@@ -13,10 +14,15 @@ const actions = [
   { key: 'Space', label: 'Voice', icon: '🎤', action: 'voice' },
 ];
 
-export function ActionBar() {
+interface ActionBarProps {
+  onSchedule?: () => void;
+}
+
+export function ActionBar({ onSchedule }: ActionBarProps) {
   const handleAction = async (action: string) => {
     const s = useSpotterStore.getState();
     switch (action) {
+      case 'schedule': onSchedule?.(); break;
       case 'training': s.setTrainingSheetOpen(true); break;
       case 'incident': s.setIncidentSheetOpen(true); break;
       case 'insights': s.setInsightsSheetOpen(true); break;

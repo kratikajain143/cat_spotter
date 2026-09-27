@@ -3,9 +3,19 @@ from app.ws import manager
 from app.engines.sequencing import optimize_sequence
 import asyncio
 import json
+import uuid
 from app.config import settings
+from pydantic import BaseModel
+from typing import Optional
 
 router = APIRouter(tags=["Tasks"])
+
+class TaskCreate(BaseModel):
+    task_type: str
+    site: str = "A"
+    planned_start: str = ""
+    pinned: bool = False
+    notes: str = ""
 
 # Load from schedule_seed
 _tasks = []
@@ -20,7 +30,7 @@ if _schedule_path.exists():
                 "site": t["site"],
                 "planned_start": t.get("planned_start", ""),
                 "pinned": t.get("pinned", False),
-                "status": "pending",
+                "status": "queued",
                 "progress": 0,
                 "eta": {"original": 60, "current": 60}
             })
@@ -54,3 +64,29 @@ async def optimize_schedule():
     result = optimize_sequence(_tasks, [{"condition": "Sunny"}])
     asyncio.create_task(manager.broadcast({"type": "schedule.reordered", "payload": _tasks}))
     return result
+
+@router.post("/tasks/schedule")
+async def schedule_task(task: TaskCreate):
+    new_task = {
+        "id": f"D-{len(_tasks)+1:02d}",
+        "task_type": task.task_type,
+        "site": task.site,
+        "planned_start": task.planned_start,
+        "pinned": task.pinned,
+        "notes": task.notes,
+        "status": "pending",
+        "progress": 0,
+        "eta": {"original": 60, "current": 60}
+    }
+    _tasks.append(new_task)
+    asyncio.create_task(manager.broadcast({"type": "task.updated", "payload": new_task}))
+    asyncio.create_task(manager.broadcast({"type": "schedule.reordered", "payload": _tasks}))
+    return {"status": "scheduled", "task": new_task}
+
+@router.delete("/tasks/{task_id}")
+async def delete_task(task_id: str):
+    global _tasks
+    _tasks = [t for t in _tasks if t["id"] != task_id]
+    asyncio.create_task(manager.broadcast({"type": "schedule.reordered", "payload": _tasks}))
+    return {"status": "removed", "id": task_id}
+
